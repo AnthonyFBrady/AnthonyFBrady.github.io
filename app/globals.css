@@ -67,7 +67,7 @@
 }
 
 @layer base {
-  * {
+  /* * {
     @apply border-border;
   }
   body {
@@ -75,7 +75,7 @@
   }
   p {
     @apply leading-relaxed;
-  }
+  } */
   strong {
     color: #0057e7;
     font-weight: 600;
