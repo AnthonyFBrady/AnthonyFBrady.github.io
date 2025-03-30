@@ -31,6 +31,21 @@ export default function Home() {
     "Curiosity might've killed the cat, but it made me a product manager. I ask a lot of questions. Sometimes even good ones.",
   ]
 
+  type ScriptStep = {
+    text: string;
+    speed: number;
+    delay: number;
+    showImage: boolean;
+    imagePath: string;
+    imageAlt: string;
+    nextStep?: number;
+    nextSection?: number;
+    link?: string;
+    isButton?: boolean;
+    showCTA?: boolean;
+    title?: string;
+  };
+  
   // Cursor blinking effect
   useEffect(() => {
     const interval = setInterval(() => {
@@ -335,7 +350,7 @@ export default function Home() {
   }
 
   // Get script content for current section and step
-  const getScriptForSection = (section, step) => {
+  const getScriptForSection = (section: number, step: number): ScriptStep | null => {
     // SECTION 1: Intro
     if (section === 1) {
       if (step === 2) {
