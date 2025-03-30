@@ -360,7 +360,7 @@ export default function Home() {
           delay: 2000,
           nextStep: 3,
           showImage: true,
-          imagePath: "/welcome-image.png",
+          imagePath: "/Slide 1.png",
           imageAlt: "Welcome",
         }
       } else if (step === 3) {
