@@ -4,11 +4,12 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Lightbulb } from "lucide-react"
+import { motion } from "framer-motion"
 
 export default function Home() {
   const [text, setText] = useState("")
   const [cursorVisible, setCursorVisible] = useState(true)
-  const [section, setSection] = useState(1)
+  const [section, setSection] = useState(0)
   const [step, setStep] = useState(1)
   const [showLink, setShowLink] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
@@ -20,6 +21,12 @@ export default function Home() {
   const audioRef = useRef(null)
   const soundTimeoutRef = useRef(null)
   const timeoutsRef = useRef([])
+  const bgAudioRef = useRef<HTMLAudioElement | null>(null)
+
+  const startPresentation = () => {
+    setSection(1)
+    setStep(1)
+  }
 
   const randomFacts = [
     "I once barbell squatted 475 pounds. That's like lifting two full-grown pandas. Not sure why you'd ever need to, but still—pandas beware.",
@@ -44,6 +51,9 @@ export default function Home() {
     isButton?: boolean;
     showCTA?: boolean;
     title?: string;
+    audioPath?: string;
+    audioStart?: number; // in seconds
+    audioEnd?: number;   // in seconds
   };
   
   // Cursor blinking effect
@@ -55,6 +65,69 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
+  useEffect(() => {
+    const audio = bgAudioRef.current
+    if (audio) {
+      audio.volume = 0.5
+      audio.play().catch((e) => {
+        console.warn("Autoplay blocked. Waiting for user interaction to start audio.")
+      })
+    }
+  }, [])  
+
+  useEffect(() => {
+    const script = getScriptForSection(section, step)
+    const audio = bgAudioRef.current
+  
+    // If audio clip isn't defined correctly, bail out early
+    if (!script || !audio || script.audioStart == null || script.audioEnd == null) return
+  
+    // Reset and play from specified start time
+    audio.currentTime = script.audioStart
+    audio.volume = 0.5
+    audio.play().catch((e) => console.warn("Audio play error", e))
+  
+    const stopAudio = () => {
+      if (audio.currentTime >= script.audioEnd) {
+        audio.pause()
+        audio.removeEventListener("timeupdate", stopAudio)
+      }
+    }
+  
+    audio.addEventListener("timeupdate", stopAudio)
+  
+    // Cleanup
+    return () => {
+      audio.pause()
+      audio.removeEventListener("timeupdate", stopAudio)
+    }
+  }, [section, step])
+  
+//   useEffect(() => {
+//   if (script.audioPath && audioRef.current) {
+//     const audio = audioRef.current
+
+//     audio.src = script.audioPath
+//     audio.currentTime = script.audioStart ?? 0
+//     audio.volume = 0.6
+
+//     const onTimeUpdate = () => {
+//       if (script.audioEnd && audio.currentTime >= script.audioEnd) {
+//         audio.pause()
+//         audio.removeEventListener("timeupdate", onTimeUpdate)
+//       }
+//     }
+
+//     audio.addEventListener("timeupdate", onTimeUpdate)
+//     audio.play().catch((e) => console.warn("Audio play error", e))
+
+//     return () => {
+//       audio.removeEventListener("timeupdate", onTimeUpdate)
+//       audio.pause()
+//     }
+//   }
+// }, [section, step])
+  
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e) => {
@@ -214,7 +287,7 @@ export default function Home() {
       // Move to next step after delay
       const timer = setTimeout(() => {
         setStep(2)
-      }, 750)
+      }, 200)
 
       timeoutsRef.current.push(timer)
       return () => clearTimeout(timer)
@@ -353,25 +426,41 @@ export default function Home() {
   const getScriptForSection = (section: number, step: number): ScriptStep | null => {
     // SECTION 1: Intro
     if (section === 1) {
-      if (step === 2) {
+      if (step === 1) {
+        return {
+          text: "",
+          speed: 60,
+          delay: 50,
+          nextStep: 2,
+          showImage: false,
+          imagePath: "/Slide 1.png",
+          imageAlt: "Welcome",
+          audioPath: "/audio.wav",
+        }
+      } else if (step === 2) {
         return {
           text: "Hey. You're early. Or I'm late. Either way—welcome.",
-          speed: 80,
+          speed: 140,
           delay: 2000,
           nextStep: 3,
           showImage: true,
           imagePath: "/Slide 1.png",
           imageAlt: "Welcome",
+          audioPath: "/audio.wav",
+          audioStart: 0,
+          audioEnd: 5,
         }
       } else if (step === 3) {
         return {
           text: "You might be looking for Tom Brady...",
-          speed: 90,
+          speed: 60,
           delay: 2000,
           nextStep: 4,
           showImage: true,
-          imagePath: "/tom-brady.jpg",
+          imagePath: "/Slide 2.png",
           imageAlt: "Tom Brady",
+          audioStart: 6,
+          audioEnd: 8.5,
         }
       } else if (step === 4) {
         return {
@@ -380,48 +469,58 @@ export default function Home() {
           delay: 2000,
           nextStep: 5,
           showImage: true,
-          imagePath: "/wayne-brady.jpg",
+          imagePath: "/Slide 3.png",
           imageAlt: "Wayne Brady",
+          audioStart: 8.5,
+          audioEnd: 12,
         }
       } else if (step === 5) {
         return {
           text: "Wrong Brady? I get it... Common mix-up.",
-          speed: 60,
+          speed: 75,
           delay: 3000,
           nextStep: 6,
-          showImage: true,
-          imagePath: "/brady-bunch.jpg",
+          showImage: false,
+          imagePath: "/Slide 4.png",
           imageAlt: "Brady Bunch",
+          audioStart: 12,
+          audioEnd: 14.5,
         }
       } else if (step === 6) {
         return {
           text: "Although... if you're still reading, you just might be here for this Brady.",
-          speed: 60,
+          speed: 90,
           delay: 3000,
           nextStep: 7,
           showImage: true,
-          imagePath: "/anthony-brady.jpg",
+          imagePath: "/Slide 4.png",
           imageAlt: "Anthony Brady",
+          audioStart: 15,
+          audioEnd: 20,
         }
       } else if (step === 7) {
         return {
           text: "This Brady builds things. Specifically—products.",
-          speed: 60,
-          delay: 3000,
+          speed: 100,
+          delay: 1500,
           nextStep: 8,
           showImage: true,
-          imagePath: "/product-building.jpg",
+          imagePath: "/slide 5.png",
           imageAlt: "Product Building",
+          audioStart: 20.5,
+          audioEnd: 24,
         }
       } else if (step === 8) {
         return {
-          text: "Let me show you what I've been working on",
+          text: "Let me show you what I've been working on.",
           speed: 60,
           delay: 3000,
           nextSection: 2,
           showImage: true,
-          imagePath: "/portfolio.jpg",
+          imagePath: "/slide 6.png",
           imageAlt: "Portfolio",
+          audioStart: 24,
+          audioEnd: 26,
         }
       }
     }
@@ -435,138 +534,164 @@ export default function Home() {
           delay: 10,
           nextStep: 2,
           showImage: true,
-          imagePath: "/autonomics-logo.png",
+          imagePath: "",
           imageAlt: "Autonomics Logo",
         }
       } else if (step === 2) {
         return {
           text: "What began as an effort to automate labor-intensive microservices—like accelerating SKU reviews or benchmarking performance through generative AI—has evolved into something far more ambitious.",
-          speed: 80,
-          delay: 2000,
+          speed: 100,
+          delay: 4000,
           nextStep: 3,
           showImage: true,
-          imagePath: "/automation-concept.jpg",
+          imagePath: "/slide 7.png",
           imageAlt: "Automation Concept",
+          audioStart: 27.5,
+          audioEnd: 39,
         }
       } else if (step === 3) {
         return {
           text: "We're building an autonomous finance assistant. Today, it's LLM-powered ingestion and reconciliation. Tomorrow, it's proactive, always-on financial workflow management—with minimal human intervention.",
-          speed: 80,
+          speed: 150,
           delay: 2000,
           nextStep: 4,
           showImage: true,
-          imagePath: "/finance-assistant.jpg",
+          imagePath: "/slide 8.png",
           imageAlt: "Finance Assistant",
+          audioStart: 196,
+          audioEnd: 210,
         }
       } else if (step === 4) {
         return {
           text: "I'm the only PM and Founding Product Manager on a 9-person team, reporting directly to the Equity Partner sponsor and Director of Product. That means wearing a lot of hats and making fast, focused calls.",
-          speed: 90,
-          delay: 2000,
+          speed: 150,
+          delay: 1000,
           nextStep: 5,
           showImage: true,
-          imagePath: "/product-manager.jpg",
+          imagePath: "/slide 9.png",
           imageAlt: "Product Manager Role",
+          audioStart: 40,
+          audioEnd: 51.5,
         }
       } else if (step === 5) {
         return {
           text: "Sometimes, that means circumventing the ideal in favor of the practical—using Replit prototypes to get something tangible in front of users fast.",
-          speed: 90,
+          speed: 130,
           delay: 2000,
           nextStep: 6,
           showImage: true,
-          imagePath: "/replit-prototype.png",
+          imagePath: "/slide 31.png",
           imageAlt: "Replit Prototype",
+          audioStart: 52,
+          audioEnd: 63,
         }
       } else if (step === 6) {
         return {
           text: "We're still early—interviewing CFOs, founders, bookkeepers, and finance professionals to deeply understand where the real friction lies.",
-          speed: 60,
+          speed: 120,
           delay: 3000,
           nextStep: 7,
           showImage: true,
-          imagePath: "/user-interviews.jpg",
+          imagePath: "/slide 10.png",
           imageAlt: "User Interviews",
+          audioStart: 63,
+          audioEnd: 71,
         }
       } else if (step === 7) {
         return {
           text: "Our roadmap is starting to take shape, and we're watching closely where agentic AI is going—trying to stay in the ring long enough to ship something that truly changes how finance works.",
-          speed: 60,
+          speed: 120,
           delay: 3000,
           nextStep: 8,
           showImage: true,
-          imagePath: "/product-roadmap.jpg",
+          imagePath: "/slide 11.png",
           imageAlt: "Product Roadmap",
+          audioStart: 71,
+          audioEnd: 81,
         }
       } else if (step === 8) {
         return {
           text: "Before Autonomics, I joined the ElectrifiedGrid team—my first product experience, and a much larger, cross-functional environment.",
-          speed: 60,
+          speed: 100,
           delay: 3000,
           nextStep: 9,
-          showImage: true,
-          imagePath: "/electrifiedgrid-logo.png",
+          showImage: false,
+          imagePath: "/slide 13.png",
           imageAlt: "ElectrifiedGrid Logo",
+          audioStart: 81.5,
+          audioEnd: 89,
         }
       } else if (step === 9) {
         return {
-          text: "ElectrifiedGrid is a strategic forecasting tool that helps utilities and governments plan for sustainability, decarbonization, and the energy transition.",
-          speed: 80,
+          text: "ElectrifiedGrid is a strategic load forecasting tool that empowers utilites and government to energy transition with confidence.",
+          speed: 130,
           delay: 2000,
           nextStep: 10,
           showImage: true,
-          imagePath: "/strategic-forecasting.jpg",
+          imagePath: "/slide 13.png",
           imageAlt: "Strategic Forecasting",
+          audioStart: 89,
+          audioEnd: 97,
         }
       } else if (step === 10) {
         return {
           text: "I helped run our early product board sessions—watching senior PMs in action, interviewing internal SMEs, shaping our impact-effort matrix, and co-leading prioritization sessions that got us to our first roadmap.",
-          speed: 90,
+          speed: 150,
           delay: 2000,
           nextStep: 11,
           showImage: true,
-          imagePath: "/product-board.jpg",
+          imagePath: "/slide 14.png",
           imageAlt: "Product Board",
+          audioStart: 96,
+          audioEnd: 110,
         }
       } else if (step === 11) {
         return {
-          text: "The experience gave me a strong foundation I lean on now, especially in a role with far less built-in guidance.",
-          speed: 90,
+          text: "This experience gave me a strong foundation I lean on now, especially in a role with far less built-in guidance.",
+          speed: 125,
           delay: 2000,
           nextStep: 12,
           showImage: true,
-          imagePath: "/foundation.jpg",
+          imagePath: "/slide 15.png",
           imageAlt: "Foundation",
+          audioStart: 110,
+          audioEnd: 117,
         }
       } else if (step === 12) {
         return {
           text: "One of my most rewarding projects was leading a Scale AI grant application with a utility partner—a deep dive into how AI could transform distribution-level planning.",
-          speed: 60,
+          speed: 130,
           delay: 3000,
           nextStep: 13,
           showImage: true,
-          imagePath: "/scale-ai-logo.png",
+          imagePath: "/slide 16.png",
           imageAlt: "Scale AI Logo",
+          audioStart: 117,
+          audioEnd: 127,
         }
       } else if (step === 13) {
         return {
           text: "I built detailed data architecture diagrams to show how telemetry, DERs, and environmental signals could feed into intelligent grid decisions.",
-          speed: 60,
+          speed: 120,
           delay: 3000,
           nextStep: 14,
           showImage: true,
-          imagePath: "/data-architecture.jpg",
+          imagePath: "/slide 17.png",
           imageAlt: "Data Architecture",
+          audioStart: 127,
+          audioEnd: 136,
         }
       } else if (step === 14) {
         return {
           text: "We matched specific models to components—classification, forecasting, risk scoring, and optimization—to illustrate feasibility and impact.",
-          speed: 60,
+          speed: 145,
           delay: 3000,
           nextSection: 3,
           showImage: true,
-          imagePath: "/ai-models.jpg",
+          imagePath: "/slide 18.png",
           imageAlt: "AI Models",
+          audioStart: 137,
+          audioEnd: 146.5,
         }
       }
     }
@@ -582,46 +707,55 @@ export default function Home() {
           showImage: true,
           imagePath: "/early-career.jpg",
           imageAlt: "Early Career",
+          
         }
       } else if (step === 2) {
         return {
           text: "Earlier in my career, I worked across a diverse set of industries: a communications agency, post-secondary institutions, a research hospital, my own company, and a startup in Korea.",
-          speed: 80,
+          speed: 110,
           delay: 2000,
           nextStep: 3,
           showImage: true,
-          imagePath: "/probitglobal-logo.png",
+          imagePath: "/slide 19.png",
           imageAlt: "Probit Global",
+          audioStart: 147,
+          audioEnd: 157,
         }
       } else if (step === 3) {
         return {
           text: "Throughout it all, I developed a passion for writing. It's something I still maintain (and you'll see some of that soon).",
-          speed: 80,
+          speed: 100,
           delay: 2000,
           nextStep: 4,
           showImage: true,
-          imagePath: "/humber-college-logo.png",
+          imagePath: "/slide 20.png",
           imageAlt: "Humber College",
+          audioStart: 157,
+          audioEnd: 164,
         }
       } else if (step === 4) {
         return {
           text: "Eventually, I realized I didn't just want to observe and communicate change—I wanted to be a part of creating it.",
-          speed: 90,
+          speed: 120,
           delay: 2000,
           nextStep: 5,
           showImage: true,
-          imagePath: "/unity-health-logo.png",
+          imagePath: "/slide 21.png",
           imageAlt: "Unity Health",
+          audioStart: 164.5,
+          audioEnd: 171,
         }
       } else if (step === 5) {
         return {
           text: "So I pivoted—from PR and communications into consulting, and then into product management (although this took some effort).",
-          speed: 90,
+          speed: 110,
           delay: 2000,
           nextSection: 4,
           showImage: true,
-          imagePath: "/career-pivot.jpg",
+          imagePath: "/slide 22.png",
           imageAlt: "Career Pivot",
+          audioStart: 172,
+          audioEnd: 179,
         }
       }
     }
@@ -635,40 +769,48 @@ export default function Home() {
           delay: 2000,
           nextStep: 2,
           showImage: true,
-          imagePath: "/beneath-brady.png",
+          imagePath: "/slide 23.png",
           imageAlt: "Beneath Brady",
+          audioStart: 180,
+          audioEnd: 182,
         }
       } else if (step === 2) {
         return {
           text: "If you're curious about what lives beneath the suit...",
           speed: 65,
-          delay: 2500,
+          delay: 1000,
           nextStep: 3,
           showImage: true,
-          imagePath: "/writing-sample.jpg",
+          imagePath: "/slide 24.png",
           imageAlt: "Writing Sample",
+          audioStart: 182,
+          audioEnd: 184.5,
         }
       } else if (step === 3) {
         return {
           text: "Think philosophy meets science.",
-          speed: 65,
-          delay: 2500,
+          speed: 80,
+          delay: 1000,
           nextStep: 4,
           showImage: true,
-          imagePath: "/philosophy-science.jpg",
+          imagePath: "/slide 29.png",
           imageAlt: "Philosophy meets Science",
+          audioStart: 184.5,
+          audioEnd: 187,
         }
       } else if (step === 4) {
         return {
           text: "Take a peek beneath Brady.",
           speed: 65,
-          delay: 3000,
+          delay: 5000,
           nextSection: 5,
           link: "https://beneathbrady.substack.com",
           isButton: true,
           showImage: true,
-          imagePath: "/substack.jpg",
+          imagePath: "/slide 25.png",
           imageAlt: "Substack",
+          audioStart: 187,
+          audioEnd: 189,
         }
       }
     }
@@ -678,22 +820,26 @@ export default function Home() {
       if (step === 1) {
         return {
           text: "Still here? Let's chat.",
-          speed: 65,
+          speed: 130,
           delay: 2000,
           nextStep: 2,
           showImage: true,
-          imagePath: "/lets-chat.jpg",
+          imagePath: "/slide 26.png",
           imageAlt: "Let's Chat",
+          audioStart: 189,
+          audioEnd: 191,
         }
       } else if (step === 2) {
         return {
           text: "No pressure. Just good conversation and better ideas.",
-          speed: 65,
+          speed: 100,
           delay: 2000,
           showCTA: true,
           showImage: true,
-          imagePath: "/conversation.jpg",
+          imagePath: "/slide 27.png",
           imageAlt: "Conversation",
+          audioStart: 191,
+          audioEnd: 196,
         }
       }
     }
@@ -704,9 +850,29 @@ export default function Home() {
   // Get current script
   const currentScript = getScriptForSection(section, step)
 
+  const renderStartScreen = () => {
+    return (
+      <div className="fixed inset-0 flex items-center justify-center bg-white text-center animate-fade-in z-50">
+        <div>
+          <h1 className="text-4xl font-bold mb-4">Welcome to My Interactive Story</h1>
+          <button
+            onClick={startPresentation}
+            className="bg-black text-white px-6 py-3 rounded-xl text-xl hover:bg-gray-800 transition-all"
+          >
+            Begin
+          </button>
+        </div>
+      </div>
+    )
+  }
+
   // Render content based on current section and step
   const renderContent = () => {
     // For section 1 step 1, just show blinking cursor
+    if (section === 0) {
+      return renderStartScreen()
+    }
+    
     if (section === 1 && step === 1) {
       return <div className="text-2xl cursor-element animate-fade-in-scale">{cursorVisible ? "|" : " "}</div>
     }
@@ -732,22 +898,17 @@ export default function Home() {
             </div>
 
             {script.showImage && (
-              <div className="flex items-center justify-center mt-8 md:mt-0">
-                <div
-                  className={`image-container w-full max-w-md aspect-[3/2] bg-gray-100 ${
-                    showImage ? "opacity-100 animate-fade-in" : "opacity-0"
-                  }`}
-                >
+              <div className="mb-8 animate-fade-in">
+                <div className="relative w-80 h-80 mx-auto rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={script.imagePath || "/placeholder.svg"}
                     alt={script.imageAlt || "Image"}
-                    width={600}
-                    height={400}
-                    className="object-cover w-full h-full grayscale hover:grayscale-0 transition-all duration-500"
-                  />
+                    fill
+                    className="object-cover"
+                    />
+                  </div>
                 </div>
-              </div>
-            )}
+              )}
           </div>
         </div>
       )
@@ -758,14 +919,14 @@ export default function Home() {
       return (
         <div className="flex flex-col items-center justify-center max-w-[880px] mx-auto no-jitter">
           {script.showImage && (
-            <div className="mb-8 opacity-0 animate-fade-in">
-              <div className="image-container w-64 h-64 overflow-hidden">
+            <div className="mb-8 animate-fade-in">
+              <div className="image-container">
                 <Image
                   src={script.imagePath || "/placeholder.svg"}
                   alt={script.imageAlt || "Image"}
                   width={256}
                   height={256}
-                  className="object-cover w-full h-full grayscale hover:grayscale-0 transition-all duration-500"
+                  className="rounded-x1"
                 />
               </div>
             </div>
@@ -831,14 +992,14 @@ export default function Home() {
       return (
         <div className="flex flex-col items-center justify-center max-w-[880px] mx-auto animate-slide-in">
           {script.showImage && (
-            <div className="mb-8 opacity-0 animate-fade-in">
-              <div className="image-container w-64 h-64 overflow-hidden">
+            <div className="mb-8 animate-fade-in">
+              <div className="image-container">
                 <Image
                   src={script.imagePath || "/placeholder.svg"}
                   alt={script.imageAlt || "Image"}
                   width={256}
                   height={256}
-                  className="object-cover w-full h-full grayscale hover:grayscale-0 transition-all duration-500"
+                  className="rounded-x1"
                 />
               </div>
             </div>
@@ -990,14 +1151,14 @@ export default function Home() {
               ))}
 
               {/* Plane indicator */}
-              <div
-                className="absolute -top-6 transform -translate-x-1/2 text-[#0057E7] transition-all duration-300"
-                style={{ left: `${((section - 1) * 100) / (totalSections - 1)}%` }}
+              <motion.div
+                className="absolute -top-8 text-3xl text-[#0057E7]"
+                animate={{ left: `${((section - 1) * 100) / (totalSections - 1)}%` }}
+                transition={{ type: "spring", stiffness: 100, damping: 12 }}
+                style={{ transform: "translateX(-50%)" }}
               >
-                <span role="img" aria-label="plane" className="text-lg">
-                  ✈️
-                </span>
-              </div>
+                🛬
+              </motion.div>
             </div>
           </div>
         </div>
@@ -1031,11 +1192,14 @@ export default function Home() {
         <source src="/typing-sound.mp3" type="audio/mpeg" />
       </audio>
 
-      {renderProgressIndicator()}
+      {section !== 0 && renderProgressIndicator()}
 
       <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 py-20">{renderContent()}</div>
 
       {renderNavArrows()}
+      <audio ref={bgAudioRef} preload="auto">
+        <source src="/audio.wav" type="audio/wav" />
+      </audio>
     </main>
   )
 }
