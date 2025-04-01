@@ -18,10 +18,13 @@ export default function Home() {
   const [randomFact, setRandomFact] = useState("")
   const [showRandomFact, setShowRandomFact] = useState(false)
   const typingRef = useRef(null)
+  const typingIndexRef = useRef(0)
   const audioRef = useRef(null)
   const soundTimeoutRef = useRef(null)
   const timeoutsRef = useRef([])
   const bgAudioRef = useRef<HTMLAudioElement | null>(null)
+  const [isPaused, setIsPaused] = useState(false)
+  const [volume, setVolume] = useState(0.5)
 
   const startPresentation = () => {
     setSection(1)
@@ -30,7 +33,8 @@ export default function Home() {
 
   const randomFacts = [
     "I once barbell squatted 475 pounds. That's like lifting two full-grown pandas. Not sure why you'd ever need to, but still—pandas beware.",
-    "I lived in Korea for six months and can hold my own in Korean. I've ordered food, made friends, and confused taxi drivers—all in a second language.",
+    "I lived in Korea for six months and can hold my own in Korean. I've ordered food, made friends, and confused taxi drivers—all in a second language.", 
+    "My mom and I can’t seem to cross paths in the kitchen on a Sunday without falling into a thoughtful chat about life, growth, and everything in between.",
     "I used to be a competitive goalkeeper—and honestly, I still am. There's something about commanding the chaos that probably bleeds into how I see the world.",
     "I have a brother who's three years older—and three years faster to every milestone growing up. Watching him chase big things made me want to sprint too.",
     "I completed a triathlon, but couldn't swim 25 metres without gasping when I started. My cardio said no. My ego said go.",
@@ -75,33 +79,53 @@ export default function Home() {
     }
   }, [])  
 
-  useEffect(() => {
-    const script = getScriptForSection(section, step)
-    const audio = bgAudioRef.current
-  
-    // If audio clip isn't defined correctly, bail out early
-    if (!script || !audio || script.audioStart == null || script.audioEnd == null) return
-  
-    // Reset and play from specified start time
-    audio.currentTime = script.audioStart
-    audio.volume = 0.5
-    audio.play().catch((e) => console.warn("Audio play error", e))
-  
-    const stopAudio = () => {
-      if (audio.currentTime >= script.audioEnd) {
-        audio.pause()
-        audio.removeEventListener("timeupdate", stopAudio)
-      }
-    }
-  
-    audio.addEventListener("timeupdate", stopAudio)
-  
-    // Cleanup
-    return () => {
+  // 🔁 Handle audio playback when section or step changes
+useEffect(() => {
+  const script = getScriptForSection(section, step)
+  const audio = bgAudioRef.current
+  if (!script || !audio || script.audioStart == null || script.audioEnd == null) return
+
+  audio.currentTime = script.audioStart
+  audio.volume = volume
+
+  const stopAudio = () => {
+    if (audio.currentTime >= script.audioEnd) {
       audio.pause()
       audio.removeEventListener("timeupdate", stopAudio)
     }
-  }, [section, step])
+  }
+
+  audio.addEventListener("timeupdate", stopAudio)
+
+  if (!isPaused) {
+    audio.play().catch((e) => console.warn("Audio play error", e))
+  }
+
+  return () => {
+    audio.pause()
+    audio.removeEventListener("timeupdate", stopAudio)
+  }
+}, [section, step])
+
+// 🟡 Pause or resume audio when `isPaused` changes
+useEffect(() => {
+  const audio = bgAudioRef.current
+  if (!audio) return
+
+  if (isPaused) {
+    audio.pause()
+  } else {
+    audio.play().catch((e) => console.warn("Audio resume error", e))
+  }
+}, [isPaused])
+
+// 🔊 Update volume when slider changes
+useEffect(() => {
+  const audio = bgAudioRef.current
+  if (audio) {
+    audio.volume = volume
+  }
+}, [volume])
   
 //   useEffect(() => {
 //   if (script.audioPath && audioRef.current) {
@@ -171,19 +195,14 @@ export default function Home() {
   // Complete current text immediately
   const completeCurrentText = () => {
     clearAllTimeouts()
-
     const script = getScriptForSection(section, step)
     if (script) {
+      typingIndexRef.current = script.text.length // ✅ prevents retrigger on resume
       setText(script.text)
       setIsTyping(false)
-
-      if (script.link) {
-        setShowLink(true)
-      }
-
-      if (script.showImage) {
-        setShowImage(true)
-      }
+  
+      if (script.link) setShowLink(true)
+      if (script.showImage) setShowImage(true)
     }
   }
 
@@ -268,7 +287,7 @@ export default function Home() {
     setFactIndex((prevIndex) => (prevIndex + 1) % randomFacts.length)
     setShowRandomFact(true)
   }
-
+  
   // Script progression
   useEffect(() => {
     console.log(`Current section: ${section}, step: ${step}`)
@@ -298,15 +317,19 @@ export default function Home() {
     if (script) {
       setIsTyping(true)
 
-      let i = 0
+      typingIndexRef.current = 0
       const typeText = () => {
-        if (i < script.text.length) {
-          setText(script.text.substring(0, i + 1))
+        if (isPaused) {
+          typingRef.current = setTimeout(typeText, 200)
+          timeoutsRef.current.push(typingRef.current)
+          return
+        }
 
-          // Play typing sound
+        if (typingIndexRef.current < script.text.length) {
+          setText(script.text.substring(0, typingIndexRef.current + 1))
           playTypingSound()
-
-          i++
+          typingIndexRef.current++
+          
           // Use a faster typing speed (40% of original for work section, 50% for others)
           const typingSpeed = Math.max(15, script.speed * (section === 2 ? 0.4 : 0.5))
           typingRef.current = setTimeout(typeText, typingSpeed)
@@ -405,10 +428,6 @@ export default function Home() {
 
     if (text.includes("team")) {
       formattedText = formattedText.replace(/team/g, 'team <span class="inline-icon">👥</span>')
-    }
-
-    if (text.includes("prototype")) {
-      formattedText = formattedText.replace(/prototype/g, 'prototype <span class="inline-icon">🧪</span>')
     }
 
     if (text.includes("philosophy")) {
@@ -583,7 +602,7 @@ export default function Home() {
           imagePath: "/slide 31.png",
           imageAlt: "Replit Prototype",
           audioStart: 52,
-          audioEnd: 63,
+          audioEnd: 62,
         }
       } else if (step === 6) {
         return {
@@ -636,13 +655,13 @@ export default function Home() {
       } else if (step === 10) {
         return {
           text: "I helped run our early product board sessions—watching senior PMs in action, interviewing internal SMEs, shaping our impact-effort matrix, and co-leading prioritization sessions that got us to our first roadmap.",
-          speed: 150,
+          speed: 140,
           delay: 2000,
           nextStep: 11,
           showImage: true,
           imagePath: "/slide 14.png",
           imageAlt: "Product Board",
-          audioStart: 96,
+          audioStart: 97.5,
           audioEnd: 110,
         }
       } else if (step === 11) {
@@ -764,41 +783,29 @@ export default function Home() {
     else if (section === 4) {
       if (step === 1) {
         return {
-          text: "Outside of work, I also write.",
-          speed: 65,
-          delay: 2000,
-          nextStep: 2,
-          showImage: true,
-          imagePath: "/slide 23.png",
-          imageAlt: "Beneath Brady",
-          audioStart: 180,
-          audioEnd: 182,
-        }
-      } else if (step === 2) {
-        return {
           text: "If you're curious about what lives beneath the suit...",
           speed: 65,
           delay: 1000,
-          nextStep: 3,
+          nextStep: 2,
           showImage: true,
           imagePath: "/slide 24.png",
           imageAlt: "Writing Sample",
           audioStart: 182,
           audioEnd: 184.5,
         }
-      } else if (step === 3) {
+      } else if (step === 2) {
         return {
           text: "Think philosophy meets science.",
-          speed: 80,
+          speed: 150,
           delay: 1000,
-          nextStep: 4,
+          nextStep: 3,
           showImage: true,
           imagePath: "/slide 29.png",
           imageAlt: "Philosophy meets Science",
           audioStart: 184.5,
           audioEnd: 187,
         }
-      } else if (step === 4) {
+      } else if (step === 3) {
         return {
           text: "Take a peek beneath Brady.",
           speed: 65,
@@ -823,7 +830,7 @@ export default function Home() {
           speed: 130,
           delay: 2000,
           nextStep: 2,
-          showImage: true,
+          showImage: false,
           imagePath: "/slide 26.png",
           imageAlt: "Let's Chat",
           audioStart: 189,
@@ -899,7 +906,7 @@ export default function Home() {
 
             {script.showImage && (
               <div className="mb-8 animate-fade-in">
-                <div className="relative w-80 h-80 mx-auto rounded-2xl overflow-hidden shadow-lg">
+                <div className="relative w-[400px] h-[400px] mx-auto rounded-2xl overflow-hidden shadow-lg">
                   <Image
                     src={script.imagePath || "/placeholder.svg"}
                     alt={script.imageAlt || "Image"}
@@ -1051,7 +1058,7 @@ export default function Home() {
         <button
           onClick={goToPrevious}
           disabled={section === 1 && step === 1}
-          className="fixed left-8 top-1/2 transform -translate-y-1/2 p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
+          className="fixed left-[25%] top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
           aria-label="Previous"
         >
           <ChevronLeft className="h-8 w-8" />
@@ -1060,7 +1067,7 @@ export default function Home() {
         <button
           onClick={isTyping ? completeCurrentText : progressToNext}
           disabled={section === 5 && step === 2 && !isTyping}
-          className="fixed right-8 top-1/2 transform -translate-y-1/2 p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
+          className="fixed right-[25%] top-1/2 transform translate-x-1/2 -translate-y-1/2 p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
           aria-label="Next"
         >
           <ChevronRight className="h-8 w-8" />
@@ -1072,95 +1079,24 @@ export default function Home() {
   const renderProgressIndicator = () => {
     const totalSections = 5
     const sectionNames = ["Intro", "Work", "Career", "Writing", "Connect"]
-
+  
     return (
-      <div className="fixed top-4 left-0 right-0 flex justify-center z-10">
-        <div
-          className="bg-white/80 backdrop-blur-sm px-6 py-4 rounded-lg shadow-md"
-          style={{ width: "880px", maxWidth: "90vw" }}
-        >
-          {/* Timeline container with proper spacing for labels */}
-          <div className="relative w-full" style={{ paddingBottom: "30px" }}>
-            {/* Main timeline line */}
-            <div className="relative h-0.5 bg-[#e6f0ff] rounded-full w-full">
-              {/* Completed line */}
-              <div
-                className="absolute top-0 left-0 h-0.5 bg-[#0057E7] rounded-full transition-all duration-300"
-                style={{ width: `${((section - 1) * 100) / (totalSections - 1)}%` }}
-              />
-
-              {/* Dotted line for remaining sections */}
-              <div
-                className="absolute top-0 h-0.5 rounded-full transition-all duration-300"
-                style={{
-                  left: `${((section - 1) * 100) / (totalSections - 1)}%`,
-                  width: `${100 - ((section - 1) * 100) / (totalSections - 1)}%`,
-                  backgroundImage: "linear-gradient(to right, #99c2ff 50%, transparent 50%)",
-                  backgroundSize: "10px 1px",
-                  backgroundRepeat: "repeat-x",
-                  backgroundPosition: "0 center",
-                }}
-              />
-
-              {/* Section markers with proper alignment */}
-              {Array.from({ length: totalSections }).map((_, idx) => (
-                <div
-                  key={idx}
-                  className="absolute top-0 cursor-pointer group"
-                  style={{
-                    left: `${(idx * 100) / (totalSections - 1)}%`,
-                    transform: "translate(-50%, -50%)",
-                  }}
-                  onClick={() => goToSection(idx + 1)}
-                >
-                  {/* Circle marker */}
-                  <div
-                    className={`w-4 h-4 rounded-full border-2 transition-all duration-300 
-                      ${
-                        idx + 1 === section
-                          ? "border-[#0057E7] bg-[#0057E7]"
-                          : idx + 1 < section
-                            ? "border-[#0057E7] bg-[#0057E7]"
-                            : "border-[#99c2ff] bg-white group-hover:border-[#0057E7] group-hover:bg-[#0057E7]"
-                      }`}
-                  />
-
-                  {/* Dotted circle outline for upcoming sections */}
-                  {idx + 1 > section && (
-                    <div className="w-4 h-4 rounded-full absolute top-0 left-0 border-2 border-dashed border-[#99c2ff] group-hover:border-[#0057E7]" />
-                  )}
-
-                  {/* Section label - positioned below dot */}
-                  <div
-                    className={`absolute text-sm transition-all duration-300 whitespace-nowrap
-                      ${
-                        idx + 1 === section
-                          ? "text-[#0057E7] font-medium"
-                          : "text-[#999999] group-hover:text-[#0057E7] group-hover:font-medium"
-                      }`}
-                    style={{
-                      top: "24px",
-                      left: "50%",
-                      transform: "translateX(-50%)",
-                      textAlign: "center",
-                    }}
-                  >
-                    {sectionNames[idx]}
-                  </div>
-                </div>
-              ))}
-
-              {/* Plane indicator */}
-              <motion.div
-                className="absolute -top-8 text-3xl text-[#0057E7]"
-                animate={{ left: `${((section - 1) * 100) / (totalSections - 1)}%` }}
-                transition={{ type: "spring", stiffness: 100, damping: 12 }}
-                style={{ transform: "translateX(-50%)" }}
+      <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-40">
+        <div className="flex gap-4 bg-white px-6 py-2 rounded-full">
+          {sectionNames.map((name, idx) => {
+            const isCompleted = idx + 1 < section
+            const isCurrent = idx + 1 === section
+            return (
+              <button
+                key={name}
+                onClick={() => goToSection(idx + 1)}
+                className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200
+                  ${isCurrent ? "bg-[#0057E7] text-white" : isCompleted ? "bg-[#cce0ff] text-[#0057E7]" : "bg-white text-gray-500 border border-[#e0e0e0] hover:text-[#0057E7]"}`}
               >
-                🛬
-              </motion.div>
-            </div>
-          </div>
+                {name}
+              </button>
+            )
+          })}
         </div>
       </div>
     )
@@ -1168,16 +1104,19 @@ export default function Home() {
 
   // Click anywhere to progress
   const handleScreenClick = (e) => {
-    // Ignore clicks on buttons and links
+    const tag = e.target.tagName.toLowerCase()
+  
     if (
-      e.target.tagName.toLowerCase() === "button" ||
-      e.target.tagName.toLowerCase() === "a" ||
+      tag === "button" ||
+      tag === "a" ||
+      tag === "input" || // ← this line is the fix
       e.target.closest("button") ||
-      e.target.closest("a")
+      e.target.closest("a") ||
+      e.target.closest("input") // ← also catch nested sliders
     ) {
       return
     }
-
+  
     if (isTyping) {
       completeCurrentText()
     } else {
@@ -1194,9 +1133,51 @@ export default function Home() {
 
       {section !== 0 && renderProgressIndicator()}
 
-      <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 py-20">{renderContent()}</div>
+      <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 py-20">
+        {renderContent()}
 
-      {renderNavArrows()}
+{/* Volume Control - Minimalist + Clean */}
+<div className="fixed bottom-36 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-4 py-2 rounded-full bg-white/90 shadow-md border border-[#0057E7]/20 backdrop-blur-md space-x-3 w-72 h-10">
+  {/* Low Volume Icon */}
+  <span className="text-[#0057E7] text-sm">🔈</span>
+
+  {/* Volume Slider */}
+  <input
+    type="range"
+    min={0}
+    max={1}
+    step={0.01}
+    value={volume}
+    onChange={(e) => {
+      const newVolume = parseFloat(e.target.value)
+      setVolume(newVolume)
+      if (bgAudioRef.current) bgAudioRef.current.volume = newVolume
+    }}
+    className="w-full h-1 bg-transparent appearance-none cursor-pointer accent-[#0057E7]
+      [&::-webkit-slider-runnable-track]:bg-[#0057E7]/40 
+      [&::-webkit-slider-runnable-track]:h-1 
+      [&::-webkit-slider-runnable-track]:rounded-full
+
+      [&::-webkit-slider-thumb]:appearance-none 
+      [&::-webkit-slider-thumb]:w-4 
+      [&::-webkit-slider-thumb]:h-4 
+      [&::-webkit-slider-thumb]:bg-[#0057E7] 
+      [&::-webkit-slider-thumb]:rounded-full 
+      [&::-webkit-slider-thumb]:shadow-sm 
+      [&::-webkit-slider-thumb]:-mt-1
+
+      [&::-moz-range-track]:bg-[#0057E7]/40 
+      [&::-moz-range-thumb]:bg-[#0057E7] 
+      [&::-moz-range-thumb]:border-none 
+      [&::-moz-range-thumb]:border-radius-full"
+  />
+
+  {/* High Volume Icon */}
+  <span className="text-[#0057E7] text-sm">🔊</span>
+</div>
+      </div>
+
+    {renderNavArrows()}
       <audio ref={bgAudioRef} preload="auto">
         <source src="/audio.wav" type="audio/wav" />
       </audio>
