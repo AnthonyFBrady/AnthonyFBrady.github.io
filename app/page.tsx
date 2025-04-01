@@ -29,6 +29,14 @@ export default function Home() {
   const startPresentation = () => {
     setSection(1)
     setStep(1)
+  
+    const audio = bgAudioRef.current
+    if (audio) {
+      audio.volume = volume
+      audio.play().catch((e) => {
+        console.warn("Audio play error after user interaction", e)
+      })
+    }
   }
 
   const randomFacts = [
@@ -69,55 +77,35 @@ export default function Home() {
     return () => clearInterval(interval)
   }, [])
 
-  useEffect(() => {
-    const audio = bgAudioRef.current
-    if (audio) {
-      audio.volume = 0.5
-      audio.play().catch((e) => {
-        console.warn("Autoplay blocked. Waiting for user interaction to start audio.")
-      })
-    }
-  }, [])  
-
   // 🔁 Handle audio playback when section or step changes
-useEffect(() => {
-  const script = getScriptForSection(section, step)
-  const audio = bgAudioRef.current
-  if (!script || !audio || script.audioStart == null || script.audioEnd == null) return
-
-  audio.currentTime = script.audioStart
-  audio.volume = volume
-
-  const stopAudio = () => {
-    if (audio.currentTime >= script.audioEnd) {
+  useEffect(() => {
+    if (section === 0) return // 🔒 prevent any audio before user starts
+  
+    const script = getScriptForSection(section, step)
+    const audio = bgAudioRef.current
+    if (!script || !audio || script.audioStart == null || script.audioEnd == null) return
+  
+    audio.currentTime = script.audioStart
+    audio.volume = volume
+  
+    const stopAudio = () => {
+      if (audio.currentTime >= script.audioEnd) {
+        audio.pause()
+        audio.removeEventListener("timeupdate", stopAudio)
+      }
+    }
+  
+    audio.addEventListener("timeupdate", stopAudio)
+  
+    if (!isPaused) {
+      audio.play().catch((e) => console.warn("Audio play error", e))
+    }
+  
+    return () => {
       audio.pause()
       audio.removeEventListener("timeupdate", stopAudio)
     }
-  }
-
-  audio.addEventListener("timeupdate", stopAudio)
-
-  if (!isPaused) {
-    audio.play().catch((e) => console.warn("Audio play error", e))
-  }
-
-  return () => {
-    audio.pause()
-    audio.removeEventListener("timeupdate", stopAudio)
-  }
-}, [section, step])
-
-// 🟡 Pause or resume audio when `isPaused` changes
-useEffect(() => {
-  const audio = bgAudioRef.current
-  if (!audio) return
-
-  if (isPaused) {
-    audio.pause()
-  } else {
-    audio.play().catch((e) => console.warn("Audio resume error", e))
-  }
-}, [isPaused])
+  }, [section, step])
 
 // 🔊 Update volume when slider changes
 useEffect(() => {
@@ -1049,30 +1037,28 @@ useEffect(() => {
 
   // Navigation arrows
   const renderNavArrows = () => {
-    if (section === 5 && step === 2 && !isTyping) {
-      return null // Don't show on final screen
-    }
-
+    if (section === 5 && step === 2 && !isTyping) return null
+  
     return (
-      <>
+      <div className="fixed bottom-6 inset-x-0 z-50 flex justify-between px-8 md:px-32">
         <button
           onClick={goToPrevious}
           disabled={section === 1 && step === 1}
-          className="fixed left-[25%] top-1/2 transform -translate-y-1/2 -translate-x-1/2 p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
+          className="p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
           aria-label="Previous"
         >
-          <ChevronLeft className="h-8 w-8" />
+          <ChevronLeft className="h-6 w-6 sm:h-8 sm:w-8" />
         </button>
-
+  
         <button
           onClick={isTyping ? completeCurrentText : progressToNext}
           disabled={section === 5 && step === 2 && !isTyping}
-          className="fixed right-[25%] top-1/2 transform translate-x-1/2 -translate-y-1/2 p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
+          className="p-4 rounded-full bg-white/90 text-[#0057E7] hover:bg-white transition-all disabled:opacity-30 disabled:cursor-not-allowed hover:scale-110 shadow-lg border border-[#0057E7]/20"
           aria-label="Next"
         >
-          <ChevronRight className="h-8 w-8" />
+          <ChevronRight className="h-6 w-6 sm:h-8 sm:w-8" />
         </button>
-      </>
+      </div>
     )
   }
 
@@ -1081,17 +1067,26 @@ useEffect(() => {
     const sectionNames = ["Intro", "Work", "Career", "Writing", "Connect"]
   
     return (
-      <div className="fixed top-8 left-1/2 transform -translate-x-1/2 z-40">
-        <div className="flex gap-4 bg-white px-6 py-2 rounded-full">
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 w-screen px-4">
+        <div className="flex overflow-x-auto gap-2 sm:gap-4 bg-white px-3 py-1.5 sm:px-6 sm:py-2 rounded-full justify-center whitespace-nowrap shadow-md border border-[#0057E7]/20">
           {sectionNames.map((name, idx) => {
             const isCompleted = idx + 1 < section
             const isCurrent = idx + 1 === section
+  
             return (
               <button
                 key={name}
                 onClick={() => goToSection(idx + 1)}
-                className={`px-3 py-1 rounded-full text-sm font-medium transition-all duration-200
-                  ${isCurrent ? "bg-[#0057E7] text-white" : isCompleted ? "bg-[#cce0ff] text-[#0057E7]" : "bg-white text-gray-500 border border-[#e0e0e0] hover:text-[#0057E7]"}`}
+                className={`
+                  px-3 py-1 text-xs sm:text-sm rounded-full font-medium transition-all duration-200
+                  ${
+                    isCurrent
+                      ? "bg-[#0057E7] text-white"
+                      : isCompleted
+                      ? "bg-[#cce0ff] text-[#0057E7]"
+                      : "bg-white text-gray-500 border border-[#e0e0e0] hover:text-[#0057E7]"
+                  }
+                `}
               >
                 {name}
               </button>
@@ -1126,62 +1121,51 @@ useEffect(() => {
 
   return (
     <main className="min-h-screen bg-white text-black font-mono" onClick={handleScreenClick}>
-      {/* Audio element for typing sound */}
-      <audio ref={audioRef} preload="auto" className="hidden">
-        <source src="/typing-sound.mp3" type="audio/mpeg" />
-      </audio>
+  {/* Audio element for typing sound */}
+  <audio ref={audioRef} preload="auto" className="hidden">
+    <source src="/typing-sound.mp3" type="audio/mpeg" />
+  </audio>
 
-      {section !== 0 && renderProgressIndicator()}
+  {section !== 0 && renderProgressIndicator()}
 
-      <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 py-20">
-        {renderContent()}
+  <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 py-20">
+    {renderContent()}
 
-{/* Volume Control - Minimalist + Clean */}
-<div className="fixed bottom-36 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-4 py-2 rounded-full bg-white/90 shadow-md border border-[#0057E7]/20 backdrop-blur-md space-x-3 w-72 h-10">
-  {/* Low Volume Icon */}
-  <span className="text-[#0057E7] text-sm">🔈</span>
-
-  {/* Volume Slider */}
-  <input
-    type="range"
-    min={0}
-    max={1}
-    step={0.01}
-    value={volume}
-    onChange={(e) => {
-      const newVolume = parseFloat(e.target.value)
-      setVolume(newVolume)
-      if (bgAudioRef.current) bgAudioRef.current.volume = newVolume
-    }}
-    className="w-full h-1 bg-transparent appearance-none cursor-pointer accent-[#0057E7]
-      [&::-webkit-slider-runnable-track]:bg-[#0057E7]/40 
-      [&::-webkit-slider-runnable-track]:h-1 
-      [&::-webkit-slider-runnable-track]:rounded-full
-
-      [&::-webkit-slider-thumb]:appearance-none 
-      [&::-webkit-slider-thumb]:w-4 
-      [&::-webkit-slider-thumb]:h-4 
-      [&::-webkit-slider-thumb]:bg-[#0057E7] 
-      [&::-webkit-slider-thumb]:rounded-full 
-      [&::-webkit-slider-thumb]:shadow-sm 
-      [&::-webkit-slider-thumb]:-mt-1
-
-      [&::-moz-range-track]:bg-[#0057E7]/40 
-      [&::-moz-range-thumb]:bg-[#0057E7] 
-      [&::-moz-range-thumb]:border-none 
-      [&::-moz-range-thumb]:border-radius-full"
-  />
-
-  {/* High Volume Icon */}
-  <span className="text-[#0057E7] text-sm">🔊</span>
-</div>
+    {/* Volume Control */}
+    {section !== 0 && (
+      <div className="fixed bottom-20 md:bottom-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-4 py-2 rounded-full bg-white/90 shadow-md border border-[#0057E7]/20 backdrop-blur-md space-x-3 w-64 h-10">
+        <span className="text-[#0057E7] text-sm">🔈</span>
+        <input
+          type="range"
+          min={0}
+          max={1}
+          step={0.01}
+          value={volume}
+          onChange={(e) => {
+            const newVolume = parseFloat(e.target.value)
+            setVolume(newVolume)
+            if (bgAudioRef.current) bgAudioRef.current.volume = newVolume
+          }}
+          className="w-full h-1 bg-transparent appearance-none cursor-pointer accent-[#0057E7]
+            [&::-webkit-slider-thumb]:w-4 
+            [&::-webkit-slider-thumb]:h-4 
+            [&::-webkit-slider-thumb]:bg-[#0057E7] 
+            [&::-webkit-slider-thumb]:rounded-full 
+            [&::-webkit-slider-thumb]:shadow-sm 
+            [&::-webkit-slider-thumb]:-mt-1"
+        />
+        <span className="text-[#0057E7] text-sm">🔊</span>
       </div>
+    )}
+  </div>
 
-    {renderNavArrows()}
-      <audio ref={bgAudioRef} preload="auto">
-        <source src="/audio.wav" type="audio/wav" />
-      </audio>
-    </main>
+  {/* ✅ Only render arrows after "Start" */}
+  {section !== 0 && renderNavArrows()}
+
+  <audio ref={bgAudioRef} preload="auto">
+    <source src="/audio.wav" type="audio/wav" />
+  </audio>
+</main>
   )
 }
 
