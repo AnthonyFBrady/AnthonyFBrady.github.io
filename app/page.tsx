@@ -11,6 +11,7 @@ export default function Home() {
   const [cursorVisible, setCursorVisible] = useState(true)
   const [section, setSection] = useState(0)
   const [step, setStep] = useState(1)
+  const [playbackRate, setPlaybackRate] = useState(1) 
   const [showLink, setShowLink] = useState(false)
   const [isTyping, setIsTyping] = useState(false)
   const [showImage, setShowImage] = useState(false)
@@ -111,6 +112,7 @@ export default function Home() {
 useEffect(() => {
   const audio = bgAudioRef.current
   if (audio) {
+      audio.playbackRate = playbackRate
     audio.volume = volume
   }
 }, [volume])
@@ -894,12 +896,13 @@ useEffect(() => {
 
             {script.showImage && (
               <div className="mb-8 animate-fade-in">
-                <div className="relative w-[400px] h-[400px] mx-auto rounded-2xl overflow-hidden shadow-lg">
-                  <Image
-                    src={script.imagePath || "/placeholder.svg"}
-                    alt={script.imageAlt || "Image"}
-                    fill
-                    className="object-cover"
+                <div className="w-full max-w-[400px] max-h-[400px] mx-auto rounded-2xl overflow-hidden shadow-lg relative aspect-video sm:aspect-square">
+                    <Image
+                      src={script.imagePath || "/placeholder.svg"}
+                      alt={script.imageAlt || "Image"}
+                      fill
+                      className="object-contain"
+                      sizes="(max-width: 768px) 100vw, 400px"
                     />
                   </div>
                 </div>
@@ -1066,8 +1069,9 @@ useEffect(() => {
     const totalSections = 5
     const sectionNames = ["Intro", "Work", "Career", "Writing", "Connect"]
   
+    
     return (
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 w-screen px-4">
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-40 w-full px-2 sm:px-4">
         <div className="flex overflow-x-auto gap-2 sm:gap-4 bg-white px-3 py-1.5 sm:px-6 sm:py-2 rounded-full justify-center whitespace-nowrap shadow-md border border-[#0057E7]/20">
           {sectionNames.map((name, idx) => {
             const isCompleted = idx + 1 < section
@@ -1119,42 +1123,78 @@ useEffect(() => {
     }
   }
 
+  const renderVolumeAndSpeedControls = () => (
+    <>
+      <span className="text-[#0057E7] text-sm">🔈</span>
+  
+      <div className="border-l border-dotted border-[#0057E7]/50 h-6 mx-2" />
+  
+      <input
+        type="range"
+        min={0}
+        max={1}
+        step={0.01}
+        value={volume}
+        onChange={(e) => {
+          const newVolume = parseFloat(e.target.value)
+          setVolume(newVolume)
+          if (bgAudioRef.current) bgAudioRef.current.volume = newVolume
+        }}
+        className="w-24 sm:w-32 h-1 bg-transparent appearance-none cursor-pointer accent-[#0057E7]
+          [&::-webkit-slider-thumb]:w-4 
+          [&::-webkit-slider-thumb]:h-4 
+          [&::-webkit-slider-thumb]:bg-[#0057E7] 
+          [&::-webkit-slider-thumb]:rounded-full 
+          [&::-webkit-slider-thumb]:shadow-sm 
+          [&::-webkit-slider-thumb]:-mt-1"
+      />
+  
+      <div className="border-l border-dotted border-[#0057E7]/50 h-6 mx-2" />
+  
+      <span className="text-[#0057E7] text-sm">🔊</span>
+  
+      <div className="flex flex-col items-center space-y-1 ml-4">
+        <label htmlFor="speed" className="text-[#0057E7] text-[10px] leading-tight">
+          Speed
+        </label>
+        <select
+          id="speed"
+          className="text-[#0057E7] bg-white border border-[#0057E7]/20 rounded-md text-[10px] px-1 py-0.5"
+          value={playbackRate}
+          onChange={(e) => {
+            const newRate = parseFloat(e.target.value)
+            setPlaybackRate(newRate)
+            if (bgAudioRef.current) bgAudioRef.current.playbackRate = newRate
+          }}
+        >
+          <option value={0.75}>0.75x</option>
+          <option value={1}>1x</option>
+          <option value={1.25}>1.25x</option>
+          <option value={1.5}>1.5x</option>
+        </select>
+      </div>
+    </>
+  )
   return (
     <main className="min-h-screen bg-white text-black font-mono" onClick={handleScreenClick}>
-  {/* Audio element for typing sound */}
-  <audio ref={audioRef} preload="auto" className="hidden">
-    <source src="/typing-sound.mp3" type="audio/mpeg" />
-  </audio>
 
   {section !== 0 && renderProgressIndicator()}
 
   <div className="flex flex-col items-center justify-center min-h-[100vh] p-4 py-20">
     {renderContent()}
 
-    {/* Volume Control */}
     {section !== 0 && (
-      <div className="fixed bottom-20 md:bottom-24 left-1/2 transform -translate-x-1/2 z-50 flex items-center px-4 py-2 rounded-full bg-white/90 shadow-md border border-[#0057E7]/20 backdrop-blur-md space-x-3 w-64 h-10">
-        <span className="text-[#0057E7] text-sm">🔈</span>
-        <input
-          type="range"
-          min={0}
-          max={1}
-          step={0.01}
-          value={volume}
-          onChange={(e) => {
-            const newVolume = parseFloat(e.target.value)
-            setVolume(newVolume)
-            if (bgAudioRef.current) bgAudioRef.current.volume = newVolume
-          }}
-          className="w-full h-1 bg-transparent appearance-none cursor-pointer accent-[#0057E7]
-            [&::-webkit-slider-thumb]:w-4 
-            [&::-webkit-slider-thumb]:h-4 
-            [&::-webkit-slider-thumb]:bg-[#0057E7] 
-            [&::-webkit-slider-thumb]:rounded-full 
-            [&::-webkit-slider-thumb]:shadow-sm 
-            [&::-webkit-slider-thumb]:-mt-1"
-        />
-        <span className="text-[#0057E7] text-sm">🔊</span>
+      <div className="hidden md:flex fixed bottom-24 left-1/2 transform -translate-x-1/2 z-50 items-center px-4 py-2 rounded-full bg-white/90 shadow-md border border-[#0057E7]/20 backdrop-blur-md space-x-4">
+        {renderVolumeAndSpeedControls()}
+      </div>
+    )}
+
+    {/* Mobile (under arrows) */}
+    {section !== 0 && (
+      <div className="md:hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 z-50 px-4">
+        <div className="flex items-center justify-center space-x-4 bg-white/90 rounded-full px-4 py-2 shadow-md border border-[#0057E7]/20 backdrop-blur-md">
+          {renderVolumeAndSpeedControls()}
+        </div>
       </div>
     )}
   </div>
