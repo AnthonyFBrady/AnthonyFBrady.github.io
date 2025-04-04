@@ -5,6 +5,7 @@ import Link from "next/link"
 import Image from "next/image"
 import { ChevronLeft, ChevronRight, Lightbulb } from "lucide-react"
 import { motion } from "framer-motion"
+import Head from "next/head"
 
 export default function Home() {
   const [text, setText] = useState("")
@@ -112,7 +113,6 @@ export default function Home() {
 useEffect(() => {
   const audio = bgAudioRef.current
   if (audio) {
-      audio.playbackRate = playbackRate
     audio.volume = volume
   }
 }, [volume])
@@ -1152,30 +1152,20 @@ useEffect(() => {
       <div className="border-l border-dotted border-[#0057E7]/50 h-6 mx-2" />
   
       <span className="text-[#0057E7] text-sm">🔊</span>
-  
-      <div className="flex flex-col items-center space-y-1 ml-4">
-        <label htmlFor="speed" className="text-[#0057E7] text-[10px] leading-tight">
-          Speed
-        </label>
-        <select
-          id="speed"
-          className="text-[#0057E7] bg-white border border-[#0057E7]/20 rounded-md text-[10px] px-1 py-0.5"
-          value={playbackRate}
-          onChange={(e) => {
-            const newRate = parseFloat(e.target.value)
-            setPlaybackRate(newRate)
-            if (bgAudioRef.current) bgAudioRef.current.playbackRate = newRate
-          }}
-        >
-          <option value={0.75}>0.75x</option>
-          <option value={1}>1x</option>
-          <option value={1.25}>1.25x</option>
-          <option value={1.5}>1.5x</option>
-        </select>
-      </div>
     </>
   )
   return (
+    <>
+    <Head>
+      <title>Anthony Brady | Product Manager Portfolio</title>
+      <meta name="description" content="Explore Anthony Brady's interactive product portfolio—LLM-powered financial assistants, strategic grid planning, and more." />
+      <meta name="robots" content="index, follow" />
+      <meta name="author" content="Anthony Brady" />
+      <meta property="og:title" content="Anthony Brady | Product Manager Portfolio" />
+      <meta property="og:description" content="Explore Anthony Brady's interactive product portfolio—LLM-powered financial assistants, strategic grid planning, and more." />
+      <meta property="og:type" content="website" />
+    </Head>
+
     <main className="min-h-screen bg-white text-black font-mono" onClick={handleScreenClick}>
 
   {section !== 0 && renderProgressIndicator()}
@@ -1206,6 +1196,7 @@ useEffect(() => {
     <source src="/audio.wav" type="audio/wav" />
   </audio>
 </main>
+</>
   )
 }
 
