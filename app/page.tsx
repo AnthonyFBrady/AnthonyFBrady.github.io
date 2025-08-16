@@ -550,7 +550,7 @@ useEffect(() => {
         return {
           text: "What began as an effort to automate labor-intensive microservices—like accelerating SKU reviews or benchmarking performance through generative AI—has evolved into something far more ambitious.",
           speed: 100,
-          delay: 1500,
+          delay: 2000,
           nextStep: 3,
           showImage: true,
           imagePath: "/slide 7.png",
@@ -562,7 +562,7 @@ useEffect(() => {
         return {
           text: "We're building an autonomous finance assistant. Today, it's LLM-powered ingestion and reconciliation. Tomorrow, it's proactive, always-on financial workflow management—with minimal human intervention.",
           speed: 150,
-          delay: 1200,
+          delay: 1000,
           nextStep: 4,
           showImage: true,
           imagePath: "/slide 8.png",
@@ -586,7 +586,7 @@ useEffect(() => {
         return {
           text: "Sometimes, that means circumventing the ideal in favor of the practical—using Replit prototypes to get something tangible in front of users fast.",
           speed: 130,
-          delay: 1700,
+          delay: 1500,
           nextStep: 6,
           showImage: true,
           imagePath: "/slide 31.png",
@@ -818,7 +818,7 @@ useEffect(() => {
         return {
           text: "Still here? Let's chat.",
           speed: 130,
-          delay: 1000,
+          delay: 2000,
           nextStep: 2,
           showImage: false,
           imagePath: "/slide 26.png",
