@@ -439,7 +439,7 @@ useEffect(() => {
         return {
           text: "",
           speed: 60,
-          delay: 50,
+          delay: 60,
           nextStep: 2,
           showImage: false,
           imagePath: "/Slide 1.png",
@@ -449,8 +449,8 @@ useEffect(() => {
       } else if (step === 2) {
         return {
           text: "Hey. You're early. Or I'm late. Either way—welcome.",
-          speed: 140,
-          delay: 2000,
+          speed: 130,
+          delay: 1800,
           nextStep: 3,
           showImage: true,
           imagePath: "/Slide 1.png",
@@ -462,8 +462,8 @@ useEffect(() => {
       } else if (step === 3) {
         return {
           text: "You might be looking for Tom Brady...",
-          speed: 60,
-          delay: 2000,
+          speed: 50,
+          delay: 1700,
           nextStep: 4,
           showImage: true,
           imagePath: "/Slide 2.png",
@@ -474,8 +474,8 @@ useEffect(() => {
       } else if (step === 4) {
         return {
           text: "Or Wayne Brady? The Brady Bunch?",
-          speed: 90,
-          delay: 2000,
+          speed: 80,
+          delay: 1800,
           nextStep: 5,
           showImage: true,
           imagePath: "/Slide 3.png",
@@ -486,8 +486,8 @@ useEffect(() => {
       } else if (step === 5) {
         return {
           text: "Wrong Brady? I get it... Common mix-up.",
-          speed: 75,
-          delay: 3000,
+          speed: 65,
+          delay: 2000,
           nextStep: 6,
           showImage: false,
           imagePath: "/Slide 4.png",
@@ -499,7 +499,7 @@ useEffect(() => {
         return {
           text: "Although... if you're still reading, you just might be here for this Brady.",
           speed: 90,
-          delay: 3000,
+          delay: 2200,
           nextStep: 7,
           showImage: true,
           imagePath: "/Slide 4.png",
@@ -511,7 +511,7 @@ useEffect(() => {
         return {
           text: "This Brady builds things. Specifically—products.",
           speed: 100,
-          delay: 1500,
+          delay: 1100,
           nextStep: 8,
           showImage: true,
           imagePath: "/slide 5.png",
@@ -523,7 +523,7 @@ useEffect(() => {
         return {
           text: "Let me show you what I've been working on.",
           speed: 60,
-          delay: 3000,
+          delay: 2000,
           nextSection: 2,
           showImage: true,
           imagePath: "/slide 6.png",
@@ -550,7 +550,7 @@ useEffect(() => {
         return {
           text: "What began as an effort to automate labor-intensive microservices—like accelerating SKU reviews or benchmarking performance through generative AI—has evolved into something far more ambitious.",
           speed: 100,
-          delay: 4000,
+          delay: 1500,
           nextStep: 3,
           showImage: true,
           imagePath: "/slide 7.png",
@@ -562,7 +562,7 @@ useEffect(() => {
         return {
           text: "We're building an autonomous finance assistant. Today, it's LLM-powered ingestion and reconciliation. Tomorrow, it's proactive, always-on financial workflow management—with minimal human intervention.",
           speed: 150,
-          delay: 2000,
+          delay: 1200,
           nextStep: 4,
           showImage: true,
           imagePath: "/slide 8.png",
@@ -574,7 +574,7 @@ useEffect(() => {
         return {
           text: "I'm the only PM and Founding Product Manager on a 9-person team, reporting directly to the Equity Partner sponsor and Director of Product. That means wearing a lot of hats and making fast, focused calls.",
           speed: 150,
-          delay: 1000,
+          delay: 700,
           nextStep: 5,
           showImage: true,
           imagePath: "/slide 9.png",
@@ -586,7 +586,7 @@ useEffect(() => {
         return {
           text: "Sometimes, that means circumventing the ideal in favor of the practical—using Replit prototypes to get something tangible in front of users fast.",
           speed: 130,
-          delay: 2000,
+          delay: 1700,
           nextStep: 6,
           showImage: true,
           imagePath: "/slide 31.png",
@@ -598,7 +598,7 @@ useEffect(() => {
         return {
           text: "We're still early—interviewing CFOs, founders, bookkeepers, and finance professionals to deeply understand where the real friction lies.",
           speed: 120,
-          delay: 3000,
+          delay: 1700,
           nextStep: 7,
           showImage: true,
           imagePath: "/slide 10.png",
@@ -610,7 +610,7 @@ useEffect(() => {
         return {
           text: "Our roadmap is starting to take shape, and we're watching closely where agentic AI is going—trying to stay in the ring long enough to ship something that truly changes how finance works.",
           speed: 120,
-          delay: 3000,
+          delay: 1700,
           nextStep: 8,
           showImage: true,
           imagePath: "/slide 11.png",
@@ -620,9 +620,9 @@ useEffect(() => {
         }
       } else if (step === 8) {
         return {
-          text: "Before Autonomics, I joined the ElectrifiedGrid team—my first product experience, and a much larger, cross-functional environment.",
+          text: "Before Delo, I joined the ElectrifiedGrid team—my first product experience, and a much larger, cross-functional environment.",
           speed: 100,
-          delay: 3000,
+          delay: 2400,
           nextStep: 9,
           showImage: false,
           imagePath: "/slide 13.png",
@@ -646,7 +646,7 @@ useEffect(() => {
         return {
           text: "I helped run our early product board sessions—watching senior PMs in action, interviewing internal SMEs, shaping our impact-effort matrix, and co-leading prioritization sessions that got us to our first roadmap.",
           speed: 140,
-          delay: 2000,
+          delay: 1500,
           nextStep: 11,
           showImage: true,
           imagePath: "/slide 14.png",
@@ -658,7 +658,7 @@ useEffect(() => {
         return {
           text: "This experience gave me a strong foundation I lean on now, especially in a role with far less built-in guidance.",
           speed: 125,
-          delay: 2000,
+          delay: 1400,
           nextStep: 12,
           showImage: true,
           imagePath: "/slide 15.png",
@@ -670,7 +670,7 @@ useEffect(() => {
         return {
           text: "One of my most rewarding projects was leading a Scale AI grant application with a utility partner—a deep dive into how AI could transform distribution-level planning.",
           speed: 130,
-          delay: 3000,
+          delay: 2000,
           nextStep: 13,
           showImage: true,
           imagePath: "/slide 16.png",
@@ -682,7 +682,7 @@ useEffect(() => {
         return {
           text: "I built detailed data architecture diagrams to show how telemetry, DERs, and environmental signals could feed into intelligent grid decisions.",
           speed: 120,
-          delay: 3000,
+          delay: 2000,
           nextStep: 14,
           showImage: true,
           imagePath: "/slide 17.png",
@@ -694,7 +694,7 @@ useEffect(() => {
         return {
           text: "We matched specific models to components—classification, forecasting, risk scoring, and optimization—to illustrate feasibility and impact.",
           speed: 145,
-          delay: 3000,
+          delay: 2000,
           nextSection: 3,
           showImage: true,
           imagePath: "/slide 18.png",
@@ -722,7 +722,7 @@ useEffect(() => {
         return {
           text: "Earlier in my career, I worked across a diverse set of industries: a communications agency, post-secondary institutions, a research hospital, my own company, and a startup in Korea.",
           speed: 110,
-          delay: 2000,
+          delay: 1300,
           nextStep: 3,
           showImage: true,
           imagePath: "/slide 19.png",
@@ -734,7 +734,7 @@ useEffect(() => {
         return {
           text: "Throughout it all, I developed a passion for writing. It's something I still maintain (and you'll see some of that soon).",
           speed: 100,
-          delay: 2000,
+          delay: 1300,
           nextStep: 4,
           showImage: true,
           imagePath: "/slide 20.png",
@@ -746,7 +746,7 @@ useEffect(() => {
         return {
           text: "Eventually, I realized I didn't just want to observe and communicate change—I wanted to be a part of creating it.",
           speed: 120,
-          delay: 2000,
+          delay: 1200,
           nextStep: 5,
           showImage: true,
           imagePath: "/slide 21.png",
@@ -758,7 +758,7 @@ useEffect(() => {
         return {
           text: "So I pivoted—from PR and communications into consulting, and then into product management (although this took some effort).",
           speed: 110,
-          delay: 2000,
+          delay: 1200,
           nextSection: 4,
           showImage: true,
           imagePath: "/slide 22.png",
@@ -818,7 +818,7 @@ useEffect(() => {
         return {
           text: "Still here? Let's chat.",
           speed: 130,
-          delay: 2000,
+          delay: 1000,
           nextStep: 2,
           showImage: false,
           imagePath: "/slide 26.png",
