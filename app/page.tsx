@@ -448,7 +448,7 @@ useEffect(() => {
         }
       } else if (step === 2) {
         return {
-          text: "Hey. You're early. Or I'm late. Either way—welcome.",
+          text: "Hey! You're early. Or I'm late. Either way—welcome.",
           speed: 130,
           delay: 1800,
           nextStep: 3,
